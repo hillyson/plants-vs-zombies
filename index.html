@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#214b36"><meta name="description" content="经典庭院，熟悉的伙伴。打开就能玩的植物大战僵尸网页版。">
+  <title>植物大战僵尸 · 庭院保卫战</title>
+  <link rel="icon" href="assets/Peashooter.gif"><link rel="stylesheet" href="style.css">
+  <script defer src="engine.js"></script><script defer src="app.js"></script>
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="./index.html" aria-label="植物大战僵尸首页"><img src="assets/Peashooter.gif" alt=""><span><strong>植物大战僵尸<span class="brand-dot">.</span></strong><small>PLANTS vs. ZOMBIES</small></span><span class="web-badge">网页版</span></a>
+  <nav aria-label="主导航"><button class="nav-link" id="adventure">选择关卡</button><button class="nav-link" id="almanac">植物图鉴 <span>↗</span></button><button class="nav-link" id="help">玩法指南</button></nav>
+  <button class="sound-button" id="sound" aria-label="开启声音" aria-pressed="false"><span id="sound-icon">♪</span><span id="sound-label">声音已关闭</span></button>
+</header>
+<main>
+  <section class="intro"><div><div class="eyebrow"><span class="little-leaf">❧</span> YOUR LAWN. YOUR RULES.</div><h1>阳光正好，<span>守住你的小院。</span></h1></div><div class="intro-actions"><div class="day-badge"><span class="day-sun">☀</span><div><strong>白天 · 前院</strong><small>DAYTIME / FRONT YARD</small></div><span class="live-dot"></span></div></div></section>
+  <section class="game-shell" aria-label="植物大战僵尸游戏">
+    <div class="mode-bar"><div class="mode-switch" role="group" aria-label="游戏模式"><button id="mode-adventure" class="mode-option" data-mode="adventure" aria-pressed="true">冒险模式</button><button id="mode-free" class="mode-option" data-mode="free" aria-pressed="false">自由模式</button><button id="boss-challenge" class="mode-option" data-mode="boss" aria-pressed="false">僵王挑战</button></div><span id="mode-description">经典关卡 · 切换模式会重新布阵</span></div>
+    <div class="seed-bank">
+      <div class="sun-bank" aria-label="当前阳光"><img src="assets/sun.gif" alt="阳光"><strong id="sun-count">150</strong><button id="auto-collect" class="auto-collect" aria-label="自动拾取阳光" aria-pressed="true" title="自动拾取阳光已开启，点击切换">自动拾取</button></div>
+      <div class="seed-cards" id="seed-cards"></div>
+      <div class="tools"><button class="shovel-button" id="shovel" aria-label="铲子 (S)" aria-pressed="false"><img src="assets/shovel.gif" alt=""><span>铲子 <kbd>S</kbd></span></button><div class="utility-buttons"><button id="pause" aria-label="暂停游戏" title="暂停 / 继续（空格）">Ⅱ</button><button id="fullscreen" aria-label="全屏游戏" title="全屏">⛶</button></div></div>
+    </div>
+    <div class="ready-banner" id="ready-banner"><span class="banner-sprout">☘</span><div><strong id="ready-title">准备开始冒险</strong><p id="ready-description">开战后收集阳光并种植，所有植物消耗阳光并有冷却。</p><p class="developer-credit">游戏由乐一 Louis开发</p></div><button id="start">开始冒险 <span>→</span></button></div>
+    <div class="scene-viewport" id="scene-viewport"><div class="scene" id="scene">
+      <div class="lawn-grid" id="lawn-grid" role="group" aria-label="种植草坪，5行9列"></div>
+      <div class="entity-layer" id="entity-layer"></div>
+      <div id="boss-health" class="boss-health" hidden><div><strong id="boss-health-title">机甲僵王</strong><span id="boss-health-value">即将登场</span></div><div class="boss-health-track"><i id="boss-health-fill"></i></div></div>
+      <div class="wave-alert" id="wave-alert" aria-live="assertive"></div>
+      <div class="scene-label"><span class="live-dot"></span><span id="scene-status">准备种植</span></div>
+      <div class="toast" id="toast" role="status"></div>
+    </div></div>
+    <div class="game-status"><div class="level-info"><span class="level-icon">⚑</span><div><strong id="level-name">冒险模式 · 第 1 关</strong><span id="level-caption">宁静的白天</span></div></div><div class="wave-progress"><span id="wave-label">准备阶段</span><div class="progress-track"><div id="progress-fill"></div><span class="flag one">⚑</span><span class="flag two">⚑</span><span class="flag three">⚑</span></div></div><div class="kill-count"><span>已击退</span><strong id="kill-count">0</strong><span>只僵尸</span></div><button id="restart" class="restart-button" title="重新开始本关">↻ <span>重新开始</span></button></div>
+  </section>
+  <section class="field-notes" aria-label="游戏提示"><div class="note-heading"><span>✳</span><div><strong>庭院生存小贴士</strong><small>A LITTLE STRATEGY GOES A LONG WAY</small></div></div><div class="field-note"><span class="note-number">01</span><p><strong>阳光是第一生产力</strong><span>默认自动拾取阳光，向日葵让收入更稳定。</span></p></div><div class="field-note"><span class="note-number">02</span><p><strong>让每一行都有守护者</strong><span>射手在后，坚果在前，搭配才是关键。</span></p></div><div class="field-note"><span class="note-number">03</span><p><strong>给自己留一张底牌</strong><span>樱桃炸弹，解决那些棘手的大场面。</span></p></div></section>
+  <footer><span class="developer-credit">游戏由乐一 Louis开发<span class="footer-leaf">❧</span></span><span>经典玩法 · 即开即玩 <span class="footer-divider">/</span> <button id="credits">关于这个小院</button></span></footer>
+</main>
+<dialog id="dialog"><div class="dialog-inner"><button id="close-dialog" class="close-dialog" aria-label="关闭弹窗">×</button><div id="dialog-content"></div></div></dialog>
+</body></html>
