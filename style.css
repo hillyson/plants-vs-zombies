@@ -56,3 +56,12 @@
 .game-shell:fullscreen .mode-bar{width:100%;flex-shrink:0}
 @media(max-width:720px){.mode-bar{flex-wrap:wrap;padding:10px 8px;gap:7px}.mode-bar>.mode-switch{width:100%}.mode-option{flex:1;padding:8px 10px;font-size:11px}#mode-description{font-size:9px}#adventure{display:block}}
 @media(max-height:500px){.game-shell:fullscreen .mode-bar{padding:4px 8px}.game-shell:fullscreen #mode-description{display:none}.game-shell:fullscreen .mode-option{min-height:30px;padding:5px 10px}.game-shell:fullscreen .seed-bank{min-height:96px;padding:4px 8px}.game-shell:fullscreen .seed-card{height:83px}.game-shell:fullscreen .seed-card .plant-art{height:43px}.game-shell:fullscreen .sun-bank img{width:30px;height:30px}.game-shell:fullscreen .sun-bank strong{font-size:22px;line-height:24px}.game-shell:fullscreen .shovel-button{height:76px}.game-shell:fullscreen .ready-banner{padding:4px 10px}.game-shell:fullscreen .ready-banner strong{font-size:12px}.game-shell:fullscreen .ready-banner p{font-size:9px;margin-top:2px}.game-shell:fullscreen .game-status{min-height:48px;padding:6px 12px}}
+
+.melon-plant img{transform-origin:50% 85%}
+.melon-plant.lobbing img{animation:melon-lob .4s ease-out}
+.melon-projectile{width:36px;height:30px;border-radius:48%;border:2px solid #294d24;background:repeating-linear-gradient(80deg,#385f28 0 4px,#86b845 5px 10px);box-shadow:inset -5px -5px 0 #294d2444,0 3px 4px #203e2933}
+.melon-projectile:after{content:"";position:absolute;left:7px;top:4px;width:12px;height:5px;border-radius:50%;background:#e5f5a977}
+.melon-splash{width:104px;height:76px;border-radius:50%;background:radial-gradient(ellipse,#ef746999,transparent 65%);animation:hit .45s ease-out forwards}
+.melon-splash i{position:absolute;width:26px;height:17px;border-radius:0 0 20px 20px;border:4px solid #69a23d;border-top:0;background:#f77b76;box-shadow:inset 0 -2px #f6e9ad}
+.melon-splash i:nth-child(1){left:2px;top:5px;rotate:-30deg}.melon-splash i:nth-child(2){right:0;top:8px;rotate:35deg}.melon-splash i:nth-child(3){left:17px;bottom:0;rotate:20deg}.melon-splash i:nth-child(4){right:15px;bottom:3px;rotate:-25deg}
+@keyframes melon-lob{0%{transform:rotate(-12deg) scaleY(.94)}45%{transform:rotate(9deg)}100%{transform:rotate(0)}}

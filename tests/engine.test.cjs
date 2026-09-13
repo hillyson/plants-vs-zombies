@@ -221,3 +221,50 @@ test('explicit modes remain independent of legacy boss option and normal economy
   const boss = new Game(1, Math.random, { mode: 'boss' }); assert.equal(boss.bossChallenge, true); assert.equal(boss.freePlay, false);
   const free = new Game(1, Math.random, { bossChallenge: true, mode: 'free' }); assert.equal(free.freePlay, true); assert.equal(free.bossChallenge, false);
 });
+test('melon-pult uses 300 sun and 7.5s cooldown; free and boss prep remain free', () => {
+  const g = battle(); assert.equal(g.plant('MelonPult', 0, 0).ok, false);
+  g.sun = 600; assert.equal(g.plant('MelonPult', 0, 0).ok, true); assert.equal(g.sun, 300);
+  assert.equal(g.plant('MelonPult', 0, 1).ok, false); advance(g, 7.6);
+  assert.equal(g.plant('MelonPult', 0, 1).ok, true);
+  for (const mode of ['free', 'boss']) {
+    const prep = new Game(1, Math.random, { mode }); prep.sun = 0;
+    assert.equal(prep.plant('MelonPult', 0, 0).ok, true); assert.equal(prep.plant('MelonPult', 0, 1).ok, true);
+    advance(prep, 120); assert.equal(prep.projectiles.length, 0); assert.equal(prep.time, 0);
+  }
+});
+const melonBattle = () => { const g = battle(); g.sun = 1000; g.plant('MelonPult', 2, 0); g.plants[0].timer = 999; return g; };
+test('melon arcs above its path, hits moving nearest same-lane target, and splashes neighbors once', () => {
+  const g = melonBattle();
+  const target = g.spawn('BucketheadZombie', 2, 540);
+  const behind = g.spawn('BucketheadZombie', 2, 590);
+  const neighbor = g.spawn('BucketheadZombie', 1, 530);
+  const otherRow = g.spawn('BucketheadZombie', 0, 540);
+  const far = g.spawn('BucketheadZombie', 3, 800);
+  g.fire(g.plants[0]); const projectile = g.projectiles[0];
+  assert.equal(projectile.targetId, target.id); advance(g, .3);
+  assert.ok(projectile.y < projectile.startY); assert.equal(target.hp, 1000);
+  advance(g, 1.2);
+  assert.equal(target.hp, 920); assert.equal(behind.hp, 974); assert.equal(neighbor.hp, 974);
+  assert.equal(otherRow.hp, 1000); assert.equal(far.hp, 1000); assert.equal(g.projectiles.length, 0);
+  advance(g, 1); assert.equal(target.hp, 920);
+  assert.equal(g.drainEvents().filter(e => e.type === 'melon-impact').length, 1);
+});
+test('melon does not launch at other rows or zombies behind the plant', () => {
+  const g = melonBattle(); g.spawn('Zombie', 1, 500); g.spawn('Zombie', 2, 160);
+  g.plants[0].timer = 0; advance(g, .1); assert.equal(g.projectiles.length, 0);
+});
+test('airborne melon freezes while paused and still lands if its plant is shoveled', () => {
+  const g = melonBattle(); const target = g.spawn('BucketheadZombie', 2, 600); g.fire(g.plants[0]); advance(g, .2);
+  g.pause(); const snapshot = JSON.stringify(g.projectiles); advance(g, 3); assert.equal(JSON.stringify(g.projectiles), snapshot);
+  g.resume(); g.shovel(2, 0); advance(g, 2); assert.equal(target.hp, 920);
+});
+test('melon keeps last landing point after target dies and never retargets another row', () => {
+  const g = melonBattle(); const target = g.spawn('Zombie', 2, 540); const neighbor = g.spawn('Zombie', 1, 550);
+  g.fire(g.plants[0]); advance(g, .2); target.hp = 0; advance(g, 1.3);
+  assert.equal(neighbor.hp, 154); assert.equal(g.projectiles.length, 0); assert.equal(g.kills, 1);
+});
+test('melon attacks boss from middle lanes without double-counting direct and splash damage', () => {
+  const g = challenge(); g.plant('MelonPult', 1, 0); g.plants[0].timer = 999; g.start(); advance(g, 3.1);
+  const boss = g.zombies.find(z => z.isBoss); g.fire(g.plants[0]); advance(g, 1.5);
+  assert.equal(boss.hp, 11920);
+});

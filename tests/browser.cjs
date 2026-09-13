@@ -14,7 +14,7 @@ const fs = require('node:fs');
   try {
     await page.goto(`${base}?test=1`);
     await page.locator('.seed-card').first().waitFor();
-    assert.equal(await page.locator('.seed-card').count(), 7); assert.equal(await page.locator('.lawn-cell').count(), 45);
+    assert.equal(await page.locator('.seed-card').count(), 8); assert.equal(await page.locator('.lawn-cell').count(), 45);
     await page.click('#mode-free');
     await page.keyboard.press('2');
     for (let row=0;row<5;row++) for(let col=0;col<9;col++) await page.locator(`[data-row="${row}"][data-col="${col}"]`).click();
@@ -75,7 +75,7 @@ const fs = require('node:fs');
     await page.keyboard.press('Space');
     assert.equal(await page.evaluate(() => __pvz.game.status), 'playing');
     await page.click('#almanac');
-    assert.equal(await page.locator('.almanac-entry').count(), 7);
+    assert.equal(await page.locator('.almanac-entry').count(), 8);
     assert.equal(await page.evaluate(() => __pvz.game.status), 'paused');
     await page.keyboard.press('Escape');
     assert.equal(await page.evaluate(() => __pvz.game.status), 'playing');
@@ -213,6 +213,25 @@ const fs = require('node:fs');
     assert.equal(await page.evaluate(() => __pvz.game.mode),'adventure');
     assert.equal(await page.evaluate(() => localStorage.getItem('pvz-best-level')),progressBeforeBoss);
     console.log('PASS modes: all six transitions, adventure economy, free preparation then waves/victory, pause/result switching, entity cleanup, independent campaign progress');
+
+    await page.evaluate(() => __pvz.reset(1, 'free'));
+    await page.keyboard.press('8');
+    await page.locator('[data-row="2"][data-col="0"]').click();
+    await page.locator('[data-row="3"][data-col="0"]').click();
+    assert.equal(await page.locator('.melon-plant').count(), 2);
+    assert.equal(await page.locator('.melon-plant img').first().getAttribute('src'), 'assets/MelonPult.png');
+    await page.click('#start');
+    await page.evaluate(() => { const g = __pvz.game; g.spawn('BucketheadZombie', 2, 540); g.spawn('BucketheadZombie', 1, 550); __pvz.advance(.45); g.pause(); });
+    assert.equal(await page.locator('.melon-projectile').count(), 1);
+    await page.waitForTimeout(300); // Let the planting animation settle while the simulation is paused.
+    await page.screenshot({ path: 'test-results/melon-desktop.png', fullPage: true });
+    await page.evaluate(() => { __pvz.game.resume(); __pvz.advance(1); });
+    assert.deepEqual(await page.evaluate(() => __pvz.game.zombies.map(z => z.hp)), [920, 974]);
+    assert.ok(await page.locator('.melon-splash').count() > 0);
+    await page.click('#almanac');
+    assert.ok(await page.locator('.almanac-entry').filter({ hasText: '西瓜投手' }).isVisible());
+    await page.click('#close-dialog');
+    console.log('PASS melon: shortcut 8, repeated preparation, sprite, airborne projectile, direct/splash impact, almanac');
 
     const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
     mobile.on('pageerror', e => errors.push(e.message));

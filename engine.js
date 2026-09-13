@@ -8,7 +8,8 @@
     { id: 'SnowPea', name: '寒冰射手', cost: 175, cooldown: 5, hp: 300, interval: 1.5, role: '冰冻减速', description: '冰豌豆造成 20 点伤害，并让僵尸移动和啃食速度降低 50%，持续 5 秒。', color: '#7eaeb8' },
     { id: 'Repeater', name: '双发射手', cost: 200, cooldown: 5, hp: 300, interval: 1.4, role: '双倍火力', description: '连续发射两颗豌豆，用双倍火力应对更难缠的僵尸。', color: '#468455' },
     { id: 'CherryBomb', name: '樱桃炸弹', cost: 150, cooldown: 25, hp: 300, role: '范围爆破', description: '种下 1 秒后爆炸，对周围 3×3 区域的僵尸造成 1800 点伤害。', color: '#c26754' },
-    { id: 'DivineWaterShooter', name: '神水滴射手', cost: 1000, cooldown: 60, hp: 300, interval: 9.99, damage: 2100000000, piercing: true, sprite: 'assets/DivineWaterShooter.png', role: '神级穿透', description: '种植数量不限。每 9.99 秒发射一颗神水滴，沿本行无限穿透，每次命中造成 21 亿伤害。种下后可立即迎敌，保护好这位强力伙伴！', color: '#55bed5' }
+    { id: 'DivineWaterShooter', name: '神水滴射手', cost: 1000, cooldown: 60, hp: 300, interval: 9.99, damage: 2100000000, piercing: true, sprite: 'assets/DivineWaterShooter.png', role: '神级穿透', description: '种植数量不限。每 9.99 秒发射一颗神水滴，沿本行无限穿透，每次命中造成 21 亿伤害。种下后可立即迎敌，保护好这位强力伙伴！', color: '#55bed5' },
+    { id: 'MelonPult', name: '西瓜投手', cost: 300, cooldown: 7.5, hp: 300, interval: 3, damage: 80, splash: 26, lobbed: true, sprite: 'assets/MelonPult.png', role: '抛投溅射', description: '每 3 秒向本行最近的僵尸抛出西瓜，直接命中造成 80 点伤害，并对落点附近三行的其他僵尸造成 26 点溅射伤害。', color: '#77a442' }
   ];
   const ZOMBIES = { Zombie: { hp: 180, speed: 11 }, ConeheadZombie: { hp: 460, speed: 10 }, BucketheadZombie: { hp: 1000, speed: 9 }, Zomboss: { hp: 12000, speed: 0 } };
   class Game {
@@ -111,6 +112,17 @@
     }
     fire(p) {
       const def = PLANTS.find(d => d.id === p.type);
+      if (def.lobbed) {
+        const target = this.zombies.filter(z => z.hp > 0 && this.canHitRow(z, p.row) && z.x > p.x - 20 && z.x < 1080).sort((a, b) => a.x - b.x)[0];
+        if (!target) return;
+        const startX = p.x + 8; const startY = p.y - 48;
+        this.projectiles.push({ id: this.id(), row: p.row, melon: true, targetId: target.id, x: startX, y: startY,
+          startX, startY, endX: target.x, endY: p.y - 15, age: 0,
+          duration: Math.max(0.6, Math.min(1.3, Math.abs(target.x - startX) / 500)),
+          arcHeight: Math.min(130, 55 + Math.abs(target.x - startX) * 0.12, Math.max(18, startY - 85)), damage: def.damage, splash: def.splash });
+        this.emit('lob', { plantId: p.id });
+        return;
+      }
       this.projectiles.push({ id: this.id(), row: p.row, x: p.x + 26, y: p.y - 19, damage: def.damage || 20, ice: p.type === 'SnowPea', water: p.type === 'DivineWaterShooter', piercing: !!def.piercing, hitIds: [] });
     }
     step(dt) {
@@ -147,6 +159,23 @@
         }
       }
       for (const b of this.projectiles) {
+        if (b.melon) {
+          b.age += dt;
+          const target = this.zombies.find(z => z.id === b.targetId && z.hp > 0);
+          if (target) b.endX = target.x;
+          const progress = Math.min(1, b.age / b.duration);
+          b.x = b.startX + (b.endX - b.startX) * progress;
+          b.y = b.startY + (b.endY - b.startY) * progress - 4 * b.arcHeight * progress * (1 - progress);
+          if (progress === 1) {
+            for (const z of this.zombies) {
+              if (z.hp <= 0) continue;
+              if (z.id === b.targetId) z.hp -= b.damage;
+              else if (Math.abs(z.row - b.row) <= 1 && Math.abs(z.x - b.endX) <= GRID.cellWidth * 1.25) z.hp -= b.splash;
+            }
+            b.dead = true; this.emit('melon-impact', { x: b.endX, y: b.endY });
+          }
+          continue;
+        }
         const next = b.x + dt * (b.water ? 560 : 310);
         const targets = this.zombies.filter(z => z.hp > 0 && this.canHitRow(z, b.row) && z.x + 22 >= b.x && z.x - 22 <= next && !b.hitIds.includes(z.id)).sort((a, c) => a.x - c.x);
         for (const target of b.piercing ? targets : targets.slice(0, 1)) {

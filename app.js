@@ -95,6 +95,12 @@
         case 'hit': effect(e.water ? 'water-hit-effect' : 'hit-effect', e.x - (e.water ? 25 : 10), e.y - (e.water ? 25 : 10), e.water ? 450 : 240); break;
         case 'bite': if (Math.random() < 0.16) play('chomp', 0.16); break;
         case 'mower': play('lawnmower', 0.4); break;
+        case 'lob': {
+          const plant = entities.get(`p${e.plantId}`);
+          if (plant) { plant.classList.remove('lobbing'); void plant.offsetWidth; plant.classList.add('lobbing'); }
+          break;
+        }
+        case 'melon-impact': effect('melon-splash', e.x - 52, e.y - 38, 450, '<i></i><i></i><i></i><i></i>'); play('plant_water', 0.22); break;
         case 'death':
           if (e.boss) { effect('explode-effect', e.x - 105, e.y - 120, 900, '<img src="assets/explosion.gif" alt="">'); play('cherrybomb', 0.5); }
           else effect('death-effect', e.x - 83, e.y - 107, 900, '<img src="assets/ZombieDie.gif" alt="">');
@@ -154,7 +160,7 @@
     const alive = new Set();
     for (const p of game.plants) {
       const key = `p${p.id}`; alive.add(key);
-      const el = entity(key, `plant-entity new${p.type === 'DivineWaterShooter' ? ' divine-water-plant' : ''}`, el => { el.innerHTML = `<img src="${plantSrc(p.type)}" alt="${PLANTS.find(d => d.id === p.type).name}"><span class="plant-health"><i></i></span>`; });
+      const el = entity(key, `plant-entity new${p.type === 'DivineWaterShooter' ? ' divine-water-plant' : p.type === 'MelonPult' ? ' melon-plant' : ''}`, el => { el.innerHTML = `<img src="${plantSrc(p.type)}" alt="${PLANTS.find(d => d.id === p.type).name}"><span class="plant-health"><i></i></span>`; });
       position(el, p.x - 39, p.y - 43, p.row * 100 + 10); const health = el.querySelector('.plant-health'); health.classList.toggle('full', p.hp === p.maxHp); health.firstChild.style.width = `${p.hp / p.maxHp * 100}%`;
     }
     for (const z of game.zombies) {
@@ -177,7 +183,10 @@
       const health = el.querySelector('.zombie-health'); health.classList.toggle('full', z.hp === z.maxHp); health.firstChild.style.width = `${Math.max(0, z.hp / z.maxHp * 100)}%`;
     }
     for (const b of game.projectiles) {
-      const key = `b${b.id}`; alive.add(key); const el = entity(key, `pea${b.water ? ' water' : b.ice ? ' ice' : ''}`, () => {}); position(el, b.x - 9, b.y - 9, b.row * 100 + 30);
+      const key = `b${b.id}`; alive.add(key);
+      const el = entity(key, b.melon ? 'melon-projectile' : `pea${b.water ? ' water' : b.ice ? ' ice' : ''}`, () => {});
+      position(el, b.x - (b.melon ? 18 : 9), b.y - (b.melon ? 15 : 9), b.melon ? 650 : b.row * 100 + 30);
+      if (b.melon) el.style.rotate = `${b.age * 420}deg`;
     }
     for (const s of game.suns) {
       const key = `s${s.id}`; alive.add(key);
@@ -323,13 +332,13 @@
     showDialog('restart', '<div class="dialog-eyebrow">A FRESH START</div><h2>重新布置你的防线？</h2><p>本关将从准备阶段重新开始，已通关的记录会保留。</p><button class="dialog-button" id="confirm-restart">重新开始</button><button class="dialog-button secondary" id="cancel-restart">继续当前游戏</button>');
     $('confirm-restart').onclick = () => reset(); $('cancel-restart').onclick = () => closeDialog();
   };
-  $('almanac').onclick = () => showDialog('almanac', `<div class="dialog-eyebrow">MEET YOUR GARDEN CREW</div><h2>小小植物，大有本领。</h2><p>认识你的七位庭院伙伴，搭配出自己的防守阵容。</p><div class="almanac-grid">${PLANTS.map(p => `<article class="almanac-entry"><img src="${plantSrc(p.id)}" alt="${p.name}"><div><h3>${p.name}</h3><small>${p.role} · ☀ ${p.cost} · 冷却 ${p.cooldown} 秒</small><p>${p.description}</p></div></article>`).join('')}</div>`);
-  $('help').onclick = () => showDialog('help', '<div class="dialog-eyebrow">THE ART OF KEEPING ZOMBIES OUT</div><h2>欢迎来到你的小院。</h2><p>游戏上方可以直接切换冒险模式、自由模式和僵王挑战，切换后重新布阵。冒险模式击退三波僵尸；自由模式先免费布局，开战后迎战三波僵尸；僵王挑战需要击败僵王并清理援兵。</p><ol class="instructions"><li><strong>准备防线：</strong>冒险模式开始后按阳光费用与冷却种植；自由模式和僵王挑战可先免费、无冷却地布满草坪，神水滴射手也不限数量。</li><li><strong>收集阳光：</strong>阳光出现 1 秒后默认自动拾取，每颗增加 25 点。点击阳光储备下方的开关可切换手动拾取。向日葵也会产出阳光。</li><li><strong>开始迎战：</strong>点击开始按钮后，僵尸波次和植物计时才会启动。三个模式开战后补种都需要阳光，并有冷却；自由模式的免费布阵只在开战前生效。</li><li><strong>巧妙搭配：</strong>坚果挡在前面，寒冰减速，樱桃炸弹清理 3×3 区域。</li><li><strong>最后防线：</strong>每行割草机只能使用一次。用过后务必补上防线！</li></ol><div class="shortcut-row"><kbd>1–7</kbd> 选择植物 <kbd>S</kbd> 铲子 <kbd>空格</kbd> 暂停 / 继续 <kbd>Esc</kbd> 取消选择<br>手机支持点选种植，横屏可以看得更清楚。切换标签页会自动暂停。</div>');
+  $('almanac').onclick = () => showDialog('almanac', `<div class="dialog-eyebrow">MEET YOUR GARDEN CREW</div><h2>小小植物，大有本领。</h2><p>认识你的八位庭院伙伴，搭配出自己的防守阵容。</p><div class="almanac-grid">${PLANTS.map(p => `<article class="almanac-entry"><img src="${plantSrc(p.id)}" alt="${p.name}"><div><h3>${p.name}</h3><small>${p.role} · ☀ ${p.cost} · 冷却 ${p.cooldown} 秒</small><p>${p.description}</p></div></article>`).join('')}</div>`);
+  $('help').onclick = () => showDialog('help', '<div class="dialog-eyebrow">THE ART OF KEEPING ZOMBIES OUT</div><h2>欢迎来到你的小院。</h2><p>游戏上方可以直接切换冒险模式、自由模式和僵王挑战，切换后重新布阵。冒险模式击退三波僵尸；自由模式先免费布局，开战后迎战三波僵尸；僵王挑战需要击败僵王并清理援兵。</p><ol class="instructions"><li><strong>准备防线：</strong>冒险模式开始后按阳光费用与冷却种植；自由模式和僵王挑战可先免费、无冷却地布满草坪，神水滴射手也不限数量。</li><li><strong>收集阳光：</strong>阳光出现 1 秒后默认自动拾取，每颗增加 25 点。点击阳光储备下方的开关可切换手动拾取。向日葵也会产出阳光。</li><li><strong>开始迎战：</strong>点击开始按钮后，僵尸波次和植物计时才会启动。三个模式开战后补种都需要阳光，并有冷却；自由模式的免费布阵只在开战前生效。</li><li><strong>巧妙搭配：</strong>坚果挡在前面，寒冰减速，樱桃炸弹清理 3×3 区域。</li><li><strong>最后防线：</strong>每行割草机只能使用一次。用过后务必补上防线！</li></ol><div class="shortcut-row"><kbd>1–8</kbd> 选择植物 <kbd>S</kbd> 铲子 <kbd>空格</kbd> 暂停 / 继续 <kbd>Esc</kbd> 取消选择<br>手机支持点选种植，横屏可以看得更清楚。切换标签页会自动暂停。</div>');
   $('adventure').onclick = () => {
     showDialog('levels', `<div class="dialog-eyebrow">ONE GARDEN. THREE ADVENTURES.</div><h2>今天，也要守好小院。</h2><p>已通关 ${bestLevel} / 3 关。切换关卡将重新开始该关。</p>${[1, 2, 3].map(n => `<button class="dialog-button${n === game.level ? '' : ' secondary'}" data-level="${n}" ${n > bestLevel + 1 ? 'disabled' : ''}>${n > bestLevel + 1 ? '🔒 ' : ''}第 ${n} 关${n <= bestLevel ? ' ✓' : ''}</button>`).join('')}`);
     $('dialog-content').querySelectorAll('[data-level]').forEach(b => { b.onclick = () => reset(Number(b.dataset.level), 'adventure'); });
   };
-  $('credits').onclick = () => showDialog('credits', '<div class="dialog-eyebrow">MADE FOR A LITTLE NOSTALGIA</div><h2>关于这个小院</h2><p>这是一个植物大战僵尸的非官方网页同人作品。采用独立编写的游戏引擎，还原经典白天庭院的核心玩法，包含冒险模式、自由模式、僵王挑战与七种植物。</p><p>角色、场景与音频素材来自 <a href="https://github.com/jiangnangame/New-Plants-vs-Zombies-JavaScript" target="_blank" rel="noopener noreferrer">JiangNanGame 的网页同人项目 ↗</a>；原作及相关素材权利归 PopCap / EA 等相应权利人所有。详细来源见项目 ASSETS.md。</p><p>所有运行素材保存在本地。无需账号，无需下载客户端，打开就能玩。</p>');
+  $('credits').onclick = () => showDialog('credits', '<div class="dialog-eyebrow">MADE FOR A LITTLE NOSTALGIA</div><h2>关于这个小院</h2><p>这是一个植物大战僵尸的非官方网页同人作品。采用独立编写的游戏引擎，还原经典白天庭院的核心玩法，包含冒险模式、自由模式、僵王挑战与八种植物。</p><p>角色、场景与音频素材来自 <a href="https://github.com/jiangnangame/New-Plants-vs-Zombies-JavaScript" target="_blank" rel="noopener noreferrer">JiangNanGame 的网页同人项目 ↗</a>；原作及相关素材权利归 PopCap / EA 等相应权利人所有。详细来源见项目 ASSETS.md。</p><p>所有运行素材保存在本地。无需账号，无需下载客户端，打开就能玩。</p>');
   document.addEventListener('keydown', e => {
     if (e.ctrlKey || e.metaKey || e.altKey || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
     if (e.code === 'Space') { if ($('dialog').open && dialogKind !== 'pause') return; e.preventDefault(); togglePause(); return; }

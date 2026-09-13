@@ -17,3 +17,9 @@ https://www.233leyuan.com/post-detail/2062025188046450688
 ## 僵王挑战
 
 `Zomboss.gif`、`Zomboss-idle.gif`、`Zomboss-attack.gif` 分别对应上游 `images/Zombies/LGBOSS/0.gif`、`1.gif`、`2.gif`，为机甲僵王素材。召唤、落点预警、砸击、暴走及血条由本项目实现。
+
+## 西瓜投手
+
+`assets/MelonPult.png` 使用内置 imagegen 新生成的透明背景立绘，并非原版提取素材；西瓜弹丸、碎片和抛投动画由 CSS 与独立游戏逻辑实现。
+
+生成提示：Create a single transparent-background game sprite asset for a web Plants vs Zombies fan game: the classic recognizable Melon-pult / 西瓜投手, facing RIGHT, full body isolated, no scenery, no text, no frame, no ground rectangle. Compact chunky rounded green watermelon plant body with dark wavy melon stripes, two alert cartoon eyes looking right, leafy base, curved springy green catapult stalk rising behind its body with a cupped leaf holding a separate striped whole watermelon at the top ready to lob toward the right. Warm hand-painted 2D cartoon game art, thick dark olive outlines, simple cel-like shading, similar to original 2009 Plants vs Zombies sprites. Clear silhouette, exaggerated charming proportions, designed to remain readable when displayed at 75 pixels tall. Body and throwing arm together centered and filling about 90% of a square canvas with small even transparent padding. True alpha transparency, no checkerboard baked into the image. One character only, no alternate views.

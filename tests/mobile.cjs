@@ -59,6 +59,10 @@ async function checkFits(page) {
     assert.equal(await p.locator('.divine-water-plant').count(), 1);
     assert.equal(await p.locator('#cancel-selection').isDisabled(), true);
     assert.match(await p.locator('#touch-selection').textContent(), /点卡片/);
+    await p.locator('[data-type="MelonPult"]').tap();
+    await p.locator('[data-row="2"][data-col="8"]').tap();
+    assert.equal(await p.locator('.melon-plant').count(), 1, 'eighth plant remains reachable on phone');
+    await p.locator('#cancel-selection').tap();
     await p.locator('#board-zoom').tap();
     assert.equal(await p.locator('#board-zoom').getAttribute('aria-pressed'), 'true');
     assert.ok(await p.evaluate(() => document.querySelector('#scene-scroll').scrollWidth <= document.querySelector('#scene-scroll').clientWidth + 1));
@@ -71,7 +75,7 @@ async function checkFits(page) {
     await p.locator('#mobile-menu').tap();
     assert.equal(await p.evaluate(() => __pvz.game.status), 'paused');
     await p.locator('[data-menu-action="almanac"]').tap();
-    assert.equal(await p.locator('.almanac-entry').count(), 7);
+    assert.equal(await p.locator('.almanac-entry').count(), 8);
     assert.equal(await p.evaluate(() => __pvz.game.status), 'paused');
     await p.locator('#close-dialog').tap();
     assert.equal(await p.evaluate(() => __pvz.game.status), 'playing');
