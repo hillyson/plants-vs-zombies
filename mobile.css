@@ -1,0 +1,117 @@
+/* The scroll surface preserves world coordinates while making the lawn touch-sized. */
+.mobile-only { display: none; }
+.scene-scroll { position: absolute; inset: 0; overflow: hidden; }
+.scene-stage { position: relative; width: 100%; height: 100%; }
+.boss-health { left: 25%; top: 8px; width: 50%; padding: 8px 12px; }
+.boss-health strong { font-size: 14px; }
+.boss-health span { font-size: 12px; }
+.wave-alert { top: 40%; left: 5%; right: 5%; font-size: clamp(20px, 3vw, 39px); }
+.toast { max-width: calc(100% - 24px); width: max-content; bottom: 12px; font-size: 14px; text-align: center; }
+
+@media (max-width: 720px), (max-width: 1024px) and (pointer: coarse) {
+  body { background: #173a29; }
+  .site-header, .intro, .field-notes, footer { display: none; }
+  main { max-width: none; padding: 0; }
+  .game-shell, .game-shell:fullscreen {
+    width: 100%; height: 100svh; height: 100dvh; min-height: 360px;
+    display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
+    border: 0; border-radius: 0; box-shadow: none;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .mobile-only { display: flex; }
+  button { touch-action: manipulation; }
+  .mode-bar, .game-shell:fullscreen .mode-bar { order: 0; flex: none; padding: 3px 6px; gap: 6px; flex-wrap: nowrap; }
+  .mode-bar > .mode-switch { width: auto; flex: 1; gap: 4px; }
+  .mode-option, .game-shell:fullscreen .mode-option { min-height: 44px; padding: 6px 8px; font-size: 12px; }
+  #mode-description { display: none; }
+  #mobile-menu, .tools > button.mobile-only { min-width: 44px; height: 44px; align-items: center; justify-content: center; border: 1px solid #65835b; border-radius: 5px; background: #254c34; color: #e7efd4; font-size: 12px; padding: 6px; }
+  .ready-banner, .game-shell:fullscreen .ready-banner { order: 1; flex: none; padding: 7px 10px; gap: 8px; }
+  .ready-banner strong, .game-shell:fullscreen .ready-banner strong { font-family: var(--sans); font-size: 13px; }
+  .ready-banner #ready-description, .ready-banner .banner-sprout { display: none; }
+  .ready-banner .developer-credit, .game-shell:fullscreen .ready-banner .developer-credit { display: block; font-size: 10px; margin: 3px 0 0; }
+  .ready-banner button { min-height: 44px; font-size: 13px; padding: 9px 12px; }
+  .scene-viewport, .game-shell:fullscreen .scene-viewport { order: 2; width: 100%; flex: 1; min-height: 140px; aspect-ratio: auto; background: #315d35; }
+  .scene-scroll { overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; touch-action: pan-x pinch-zoom; scrollbar-width: none; }
+  .scene-scroll::-webkit-scrollbar { display: none; }
+  .scene { touch-action: pan-x pinch-zoom; }
+  .scene-label { display: none; }
+  .scene.has-selection .lawn-cell { border: 1px solid #f0ffab38; }
+  .scene.has-selection .lawn-cell:hover { background: transparent; border: 1px solid #f0ffab38; }
+  .scene.has-selection .lawn-cell:active { background: #effca766; border: 2px solid #f8ef97; }
+  .lawn-cell .ghost { display: none; }
+  .boss-health { width: calc(100% - 20px); max-width: 460px; left: 50%; transform: translateX(-50%); top: 5px; padding: 5px 10px; }
+  .boss-health strong { font-size: 12px; }
+  .boss-health span { font-size: 11px; }
+  .boss-health > div:first-child { margin-bottom: 4px; }
+  .boss-health-track { height: 6px; }
+  .toast { z-index: 1300; font-size: 13px; padding: 9px 14px; }
+  .wave-alert { font-size: 24px; }
+  .mobile-overview { order: 3; flex: none; height: 48px; align-items: center; gap: 8px; padding: 2px 8px; background: #193e2b; }
+  .mobile-overview[hidden] { display: none; }
+  #overview-jump { flex: 1; min-width: 0; height: 44px; border: 0; padding: 0; background: #315c34; }
+  #overview-map { display: block; width: 100%; height: 44px; }
+  .mobile-overview > span { font-size: 10px; line-height: 1.6; color: #c4d7ac; }
+  .game-status, .game-shell:fullscreen .game-status { order: 4; flex: none; min-height: 24px; padding: 3px 10px; gap: 6px; flex-wrap: nowrap; }
+  .level-icon, .level-info div > span, .kill-count, .restart-button, .progress-track { display: none; }
+  .level-info strong { font-size: 10px; }
+  .wave-progress { justify-content: flex-end; }
+  .wave-progress > span { font-size: 11px; }
+  .seed-bank, .game-shell:fullscreen .seed-bank { order: 5; flex: none; min-height: 0; padding: 6px; gap: 4px 8px; display: grid; grid-template-columns: 58px minmax(0,1fr); border-bottom: 0; border-top: 1px solid #54754b; }
+  .sun-bank { width: 58px; }
+  .sun-bank img, .game-shell:fullscreen .sun-bank img { height: 26px; width: 26px; margin: 0; }
+  .sun-bank strong, .game-shell:fullscreen .sun-bank strong { font-size: 23px; line-height: 26px; }
+  .auto-collect { min-height: 44px; width: 58px; margin: 0; padding: 5px 2px; font-size: 10px; }
+  .seed-cards { display: flex; overflow-x: auto; gap: 6px; padding: 4px 3px; touch-action: pan-x pinch-zoom; scrollbar-width: none; }
+  .seed-cards::-webkit-scrollbar { display: none; }
+  .seed-card, .game-shell:fullscreen .seed-card { flex: 0 0 66px; max-width: none; height: 88px; padding: 4px 2px; border-width: 2px; }
+  .seed-name { font-size: 10px; letter-spacing: -.5px; }
+  .seed-hotkey { display: none; }
+  .seed-card .plant-art, .game-shell:fullscreen .seed-card .plant-art { width: 42px; height: 44px; margin: 3px auto 0; }
+  .seed-cost { font-size: 12px; }
+  .seed-card:hover { transform: none; }
+  .seed-card.selected { transform: none; border-color: #f6d969; box-shadow: 0 0 0 2px #f6d969; }
+  .tools { grid-column: 1 / -1; width: 100%; margin: 0; flex-direction: row; gap: 5px; }
+  #touch-selection { flex: 1; min-width: 0; font-size: 11px; line-height: 1.5; color: #e8efca; }
+  #cancel-selection:disabled { opacity: .4; }
+  .shovel-button, .game-shell:fullscreen .shovel-button { width: 44px; height: 44px; flex: none; gap: 0; }
+  .shovel-button img { width: 30px; margin: 0; }
+  .shovel-button span { font-size: 9px; margin: 0; }
+  .shovel-button kbd { display: none; }
+  .utility-buttons { flex-direction: row; gap: 5px; }
+  .utility-buttons button { height: 44px; width: 44px; font-size: 22px; }
+  dialog { width: min(620px, calc(100% - 16px)); max-height: calc(100dvh - 16px); border-radius: 12px; }
+  .dialog-inner { padding: 46px 18px 22px; }
+  .close-dialog { height: 44px; width: 44px; top: 2px; right: 4px; }
+  .dialog-inner h2 { font-size: 23px; }
+  .dialog-button { min-height: 44px; }
+  .mobile-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mobile-menu-grid button { min-height: 48px; margin: 0; }
+  .mobile-menu-hint { color: #627350; font-size: 13px; line-height: 1.8; }
+}
+
+/* A side tray gives all five lanes more height in landscape. */
+@media (orientation: landscape) and (max-width: 1024px) and (pointer: coarse), (orientation: landscape) and (max-width: 720px) {
+  .game-shell, .game-shell:fullscreen { min-height: 300px; position: relative; }
+  .mode-bar, .game-shell:fullscreen .mode-bar { padding: 0 6px; }
+  .mode-bar > .mode-switch { flex: none; width: auto; }
+  #mobile-menu { margin-left: auto; }
+  .ready-banner, .game-shell:fullscreen .ready-banner { position: absolute; top: env(safe-area-inset-top); left: auto; right: calc(60px + env(safe-area-inset-right)); height: 44px; width: auto; max-width: 290px; z-index: 900; padding: 0; border: 0; background: transparent; }
+  .ready-banner strong { display: none; }
+  .ready-banner .developer-credit { max-width: 100px; color: #c8d7b7; }
+  .ready-banner button { min-height: 44px; }
+  .scene-viewport, .game-shell:fullscreen .scene-viewport { margin-left: 80px; width: calc(100% - 134px); }
+  .game-status, .game-shell:fullscreen .game-status { margin-left: 80px; width: calc(100% - 134px); min-height: 18px; padding: 1px 8px; }
+  .seed-bank, .game-shell:fullscreen .seed-bank { position: absolute; left: env(safe-area-inset-left); top: calc(45px + env(safe-area-inset-top)); bottom: env(safe-area-inset-bottom); width: 78px; padding: 4px; display: flex; flex-direction: column; gap: 4px; border: 0; }
+  .sun-bank { width: 58px; display: grid; grid-template-columns: 22px 1fr; }
+  .sun-bank img, .game-shell:fullscreen .sun-bank img { width: 22px; height: 22px; }
+  .sun-bank strong, .game-shell:fullscreen .sun-bank strong { font-size: 19px; line-height: 23px; letter-spacing: 0; }
+  .auto-collect { grid-column: 1 / -1; }
+  .seed-cards { flex: 1; flex-direction: column; overflow-y: auto; overflow-x: hidden; touch-action: pan-y pinch-zoom; min-height: 0; width: 70px; padding: 3px 4px; gap: 6px; }
+  .seed-card, .game-shell:fullscreen .seed-card { flex: 0 0 70px; width: 62px; height: 70px; }
+  .seed-card .plant-art, .game-shell:fullscreen .seed-card .plant-art { height: 29px; width: 35px; margin: 1px auto 0; }
+  .seed-card:before { inset: 16px 4px 18px; }
+  .seed-name { font-size: 9px; }
+  .tools { position: fixed; right: calc(5px + env(safe-area-inset-right)); bottom: calc(10px + env(safe-area-inset-bottom)); width: 44px; flex-direction: column; gap: 8px; z-index: 950; }
+  #touch-selection { display: none; }
+  .utility-buttons { flex-direction: column; gap: 8px; }
+}

@@ -6,6 +6,9 @@
   let adventureLevel = 1;
   const modes = { adventure: '冒险模式', free: '自由模式', boss: '僵王挑战' };
   let selected = 'SunFlower';
+  const mobileLayout = matchMedia('(max-width: 720px), (max-width: 1024px) and (pointer: coarse)');
+  let overviewMode = false;
+  let viewScale = 1;
   let soundEnabled = false;
   let autoCollectSun = true;
   try { autoCollectSun = localStorage.getItem('pvz-auto-collect-sun') !== 'false'; } catch { /* Keep the default when storage is unavailable. */ }
@@ -42,6 +45,8 @@
     document.querySelectorAll('.seed-card').forEach(b => { const on = b.dataset.type === selected; b.classList.toggle('selected', on); b.setAttribute('aria-pressed', String(on)); });
     $('shovel').classList.toggle('selected', selected === 'shovel'); $('shovel').setAttribute('aria-pressed', String(selected === 'shovel'));
     $('scene').classList.toggle('has-selection', !!selected);
+    $('touch-selection').textContent = selected === 'shovel' ? '点植物铲除' : selected ? `已选${PLANTS.find(p => p.id === selected).name}` : '点卡片选择植物';
+    $('cancel-selection').disabled = !selected;
     document.querySelectorAll('.ghost').forEach(g => g.remove());
   }
   PLANTS.forEach((p, index) => {
@@ -59,7 +64,8 @@
       else { const result = game.plant(selected, row, col); if (!result.ok) toast(result.reason); }
       render();
     });
-    cell.addEventListener('pointerenter', () => {
+    cell.addEventListener('pointerenter', event => {
+      if (event.pointerType !== 'mouse') return;
       if (selected && selected !== 'shovel' && !game.plants.some(p => p.row === row && p.col === col)) {
         const ghost = document.createElement('img'); ghost.src = plantSrc(selected); ghost.className = 'ghost'; ghost.alt = ''; cell.append(ghost);
       }
@@ -188,15 +194,59 @@
       const name = plant ? PLANTS.find(p => p.id === plant.type).name : '空地';
       cell.setAttribute('aria-label', `第${Number(cell.dataset.row) + 1}行第${Number(cell.dataset.col) + 1}列，${name}`);
     }
+    drawOverview();
+  }
+  function drawOverview() {
+    if ($('mobile-overview').hidden) return;
+    const canvas = $('overview-map'); const ctx = canvas.getContext('2d');
+    const x = worldX => (worldX - 65) / 1035 * canvas.width;
+    ctx.fillStyle = '#315c34'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (let row = 0; row < 5; row++) {
+      ctx.fillStyle = row % 2 ? '#497842' : '#406f3c';
+      ctx.fillRect(x(GRID.x), row * 17 + 2, x(GRID.x + 738) - x(GRID.x), 16);
+    }
+    ctx.fillStyle = '#e4ef9c';
+    for (const p of game.plants) ctx.fillRect(x(p.x) - 3, p.row * 17 + 7, 6, 7);
+    ctx.fillStyle = '#ffae76';
+    for (const z of game.zombies) ctx.fillRect(x(z.x) - 3, z.row * 17 + 5, z.isBoss ? 10 : 6, 10);
+    const scroll = $('scene-scroll');
+    const left = scroll.scrollLeft / viewScale / 1035 * canvas.width;
+    const width = scroll.clientWidth / viewScale / 1035 * canvas.width;
+    ctx.strokeStyle = '#fff4b7'; ctx.lineWidth = 3;
+    ctx.strokeRect(left + 1.5, 1.5, Math.min(width - 3, canvas.width - left - 3), canvas.height - 3);
   }
   function resize() {
     const viewport = $('scene-viewport');
-    const scale = document.fullscreenElement ? Math.min(viewport.clientWidth / 1100, viewport.clientHeight / 600) : viewport.clientWidth / 1100;
+    const stage = $('scene-stage'); const scroll = $('scene-scroll');
+    const mobile = mobileLayout.matches;
+    const scale = mobile
+      ? (overviewMode ? Math.min(viewport.clientWidth / 1035, viewport.clientHeight / 535) : Math.min(0.75, viewport.clientHeight / 535))
+      : document.fullscreenElement ? Math.min(viewport.clientWidth / 1100, viewport.clientHeight / 600) : viewport.clientWidth / 1100;
+    viewScale = scale;
+    stage.style.width = `${Math.max(viewport.clientWidth, (mobile ? 1035 : 1100) * scale)}px`;
+    stage.style.height = `${viewport.clientHeight}px`;
     $('scene').style.transform = `scale(${scale})`;
-    $('scene').style.left = `${(viewport.clientWidth - 1100 * scale) / 2}px`;
-    $('scene').style.top = `${Math.max(0, (viewport.clientHeight - 600 * scale) / 2)}px`;
+    $('scene').style.left = `${mobile ? Math.max(0, (viewport.clientWidth - 1035 * scale) / 2) - 65 * scale : (viewport.clientWidth - 1100 * scale) / 2}px`;
+    $('scene').style.top = `${mobile ? Math.max(0, (viewport.clientHeight - 535 * scale) / 2) - 65 * scale : Math.max(0, (viewport.clientHeight - 600 * scale) / 2)}px`;
+    // Keep the overview's height reserved in portrait to avoid resize feedback loops.
+    $('mobile-overview').hidden = !mobile || matchMedia('(orientation: landscape)').matches || overviewMode;
+    if (!mobile || overviewMode) scroll.scrollLeft = 0;
+    $('board-zoom').textContent = overviewMode ? '放大' : '全景';
+    $('board-zoom').setAttribute('aria-pressed', String(overviewMode));
+    $('board-zoom').setAttribute('aria-label', overviewMode ? '放大草坪方便种植' : '查看整个草坪全景');
+    drawOverview();
   }
   new ResizeObserver(resize).observe($('scene-viewport'));
+  mobileLayout.addEventListener('change', resize);
+  window.addEventListener('resize', resize);
+  $('scene-scroll').addEventListener('scroll', drawOverview, { passive: true });
+  $('overview-jump').onclick = event => {
+    const rect = $('overview-map').getBoundingClientRect();
+    const ratio = event.detail === 0 ? 0.5 : Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    $('scene-scroll').scrollLeft = ratio * 1035 * viewScale - $('scene-scroll').clientWidth / 2;
+  };
+  $('board-zoom').onclick = () => { overviewMode = !overviewMode; resize(); };
+  $('cancel-selection').onclick = () => { selected = null; updateSelection(); };
   function reset(level = game.level, mode = game.mode) {
     closeDialog(false); game = new Game(level, Math.random, { mode }); game.autoCollectSun = autoCollectSun; selected = 'SunFlower';
     if (game.mode === 'adventure') adventureLevel = game.level;
@@ -204,6 +254,7 @@
     for (const e of effects) e.el.remove(); effects.clear();
     $('wave-alert').classList.remove('visible'); $('toast').classList.remove('visible');
     music.pause(); music.currentTime = 0; updateSelection(); render();
+    $('scene-scroll').scrollLeft = 0;
   }
   function showDialog(kind, html) {
     if ($('dialog').open) closeDialog(false);
@@ -238,6 +289,18 @@
     reset(mode === 'adventure' ? adventureLevel : 1, mode);
   });
   $('start').onclick = () => { game.start(); render(); };
+  $('mobile-menu').onclick = () => {
+    showDialog('menu', `<h2>庭院菜单</h2><div class="mobile-menu-grid">${[
+      ['adventure', '选择关卡'], ['almanac', '植物图鉴'], ['help', '玩法指南'],
+      ['sound', soundEnabled ? '关闭声音' : '开启声音'], ['fullscreen', '切换全屏'],
+      ['restart', '重新开始'], ['credits', '关于游戏']
+    ].map(([id, label]) => `<button class="dialog-button" data-menu-action="${id}">${label}</button>`).join('')}</div><p class="mobile-menu-hint">点卡片，再点草坪种植。左右滑动草坪查看防线，点缩略图快速定位；“全景”可看完整战场。横屏操作面积更大。切换模式会重新开始本局。</p><p class="developer-credit">游戏由乐一 Louis开发</p>`);
+  };
+  $('dialog-content').addEventListener('click', event => {
+    const action = event.target.closest('[data-menu-action]');
+    if (!action) return;
+    closeDialog(); $(action.dataset.menuAction).click();
+  });
   $('shovel').onclick = () => select('shovel');
   $('auto-collect').onclick = () => {
     autoCollectSun = !autoCollectSun; game.autoCollectSun = autoCollectSun;
